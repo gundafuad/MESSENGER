@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>KLM Messenger - Kallumpuram</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            klm: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e40af',
+              darkBg: '#0f172a',
+              darkCard: '#1e293b',
+              darkBorder: '#334155'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(156, 163, 175, 0.4);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(156, 163, 175, 0.7);
+    }
+
+    /* Working Switch Toggles with High Clickability */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+      vertical-align: middle;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #cbd5e1;
+      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 34px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .dark .slider {
+      background-color: #475569;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    input:checked + .slider {
+      background-color: #2563eb;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+
+    /* Glassmorphism & Custom App Frame */
+    .mobile-frame {
+      max-width: 480px;
+      height: 100vh;
+      max-height: 920px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+    }
+
+    @media (min-width: 640px) {
+      .mobile-frame {
+        height: 92vh;
+        border-radius: 32px;
+        border: 8px solid #1e293b;
+      }
+      .dark .mobile-frame {
+        border-color: #334155;
+      }
+    }
+
+    /* Dynamic Message Bubbles */
+    .chat-bubble-user {
+      border-top-right-radius: 4px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    }
+    .chat-bubble-other {
+      border-top-left-radius: 4px;
+    }
+
+    /* Smooth Slide Drawers */
+    .drawer-slide {
+      transition: transform 0.3s ease-in-out;
+    }
+    .drawer-hidden {
+      transform: translateX(-100%);
+    }
+    .drawer-visible {
+      transform: translateX(0);
+    }
+  </style>
+</head>
+<body class="bg-slate-900 font-sans antialiased text-slate-800 dark:text-slate-100 flex items-center justify-center min-h-screen p-0 sm:p-4 transition-colors duration-200">
+
+  <!-- App Container Frame -->
+  <div id="appContainer" class="mobile-frame w-full bg-slate-50 dark:bg-slate-900 flex flex-col relative overflow-hidden transition-colors duration-200">
+    
+    <!-- Top Status Bar Simulation -->
+    <div class="w-full bg-slate-100 dark:bg-slate-800 px-6 pt-3 pb-1 flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-slate-400 select-none border-b border-slate-200 dark:border-slate-700/50 z-20">
+      <span>KLM Messenger</span>
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-signal"></i>
+        <i class="fa-solid fa-wifi"></i>
+        <i class="fa-solid fa-battery-full text-green-500"></i>
+      </div>
+    </div>
+
+    <!-- ================= AUTH SCREEN ================= -->
+    <div id="authScreen" class="flex-1 flex flex-col p-6 overflow-y-auto justify-between z-10">
+      <div class="my-auto">
+        <!-- Logo & Title -->
+        <div class="text-center mb-8">
+          <div class="w-20 h-20 bg-blue-600 rounded-3xl mx-auto flex items-center justify-center shadow-lg shadow-blue-500/30 mb-3 transform rotate-3">
+            <i class="fa-solid fa-paper-plane text-3xl text-white"></i>
+          </div>
+          <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">KLM MESSENGER</h1>
+          <p class="text-xs tracking-widest text-blue-600 dark:text-blue-400 font-bold uppercase mt-1">Kallumpuram Network</p>
+        </div>
+
+        <!-- Auth Mode Switcher -->
+        <div class="flex bg-slate-200 dark:bg-slate-800 p-1 rounded-2xl mb-6">
+          <button id="tabLoginBtn" class="flex-1 py-2.5 rounded-xl font-medium text-sm transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm">Login</button>
+          <button id="tabSignupBtn" class="flex-1 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-500 dark:text-slate-400">Sign Up</button>
+        </div>
+
+        <!-- Notification Alert Box -->
+        <div id="authAlert" class="hidden mb-4 p-3 rounded-xl text-xs flex items-center gap-2"></div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Username</label>
+            <div class="relative">
+              <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+              <input type="text" id="loginUsername" required placeholder="Enter username" class="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Password</label>
+            <div class="relative">
+              <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+              <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white">
+            </div>
+          </div>
+          <button type="submit" id="loginSubmitBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-md transition-all active:scale-[0.99] flex justify-center items-center">
+            <span>Login to Account</span>
+          </button>
+        </form>
+
+        <!-- SIGNUP FORM -->
+        <form id="signupForm" class="space-y-3 hidden">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Username*</label>
+              <input type="text" id="signupUsername" required placeholder="sahl_klm" class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Full Name*</label>
+              <input type="text" id="signupFullName" required placeholder="Sahl Kallumpuram" class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Password*</label>
+            <input type="password" id="signupPassword" required placeholder="Set strong password" class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Phone Number*</label>
+            <input type="tel" id="signupPhone" required placeholder="+91 98765 43210" class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Instagram Handle</label>
+              <input type="text" id="signupIg" placeholder="@username" class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Snapchat Handle</label>
+              <input type="text" id="signupSnap" placeholder="username_snap" class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Profile Avatar URL</label>
+            <input type="url" id="signupAvatar" placeholder="https://..." class="w-full px-3 py-2 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-blue-500 dark:text-white">
+          </div>
+          <button type="submit" id="signupSubmitBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-md transition-all active:scale-[0.99] flex justify-center items-center mt-2">
+            <span>Request Account Approval</span>
+          </button>
+        </form>
+      </div>
+
+      <div class="text-center text-xs text-slate-400 py-2">
+        KLM Messenger v2.5 • Kallumpuram Official App
+      </div>
+    </div>
+
+    <!-- ================= MAIN MESSENGER SCREEN ================= -->
+    <div id="mainScreen" class="flex-1 flex flex-col hidden overflow-hidden relative">
+      
+      <!-- Top Navigation Header -->
+      <div class="bg-white dark:bg-slate-800 px-4 py-3 border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between z-10 shadow-sm">
+        <div class="flex items-center space-x-3">
+          <button id="openDrawerBtn" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <div class="flex items-center space-x-2">
+            <div id="activeChatAvatar" class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm overflow-hidden">
+              <i class="fa-solid fa-users"></i>
+            </div>
+            <div>
+              <h2 id="activeChatTitle" class="text-sm font-bold text-slate-900 dark:text-white leading-snug">Main Lounge</h2>
+              <p id="activeChatSubtitle" class="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Group Chat
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-1">
+          <button id="globalSearchBtn" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+          <button id="activeChatInfoBtn" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+            <i class="fa-solid fa-circle-info"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Messages Feed Box -->
+      <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-100 dark:bg-slate-900/70">
+        <!-- Messages rendered dynamically here -->
+      </div>
+
+      <!-- Message Composer Area -->
+      <div class="bg-white dark:bg-slate-800 p-3 border-t border-slate-200 dark:border-slate-700/60 z-10">
+        <!-- Attachment Preview Bar -->
+        <div id="attachmentPreview" class="hidden mb-2 relative inline-block">
+          <img id="previewImg" src="" class="h-16 rounded-lg border border-slate-300 dark:border-slate-600">
+          <button id="clearAttachment" class="absolute -top-2 -right-2 bg-red-500 text-white w-5 h-5 rounded-full text-xs flex items-center justify-center shadow"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <form id="sendMessageForm" class="flex items-center gap-2">
+          <button type="button" id="attachMediaBtn" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200">
+            <i class="fa-solid fa-paperclip"></i>
+          </button>
+          <input type="text" id="messageInput" autocomplete="off" placeholder="Message Kallumpuram..." class="flex-1 py-2.5 px-4 bg-slate-100 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600/60 rounded-full text-sm focus:outline-none focus:border-blue-500 dark:text-white">
+          <button type="submit" class="p-2.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-md transition active:scale-95 flex justify-center items-center w-10 h-10">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- ================= LEFT NAVIGATION DRAWER ================= -->
+    <div id="drawerBackdrop" class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-30 hidden transition-opacity"></div>
+    <div id="drawerMenu" class="absolute top-0 left-0 bottom-0 w-4/5 max-w-[320px] bg-white dark:bg-slate-800 z-40 drawer-slide drawer-hidden flex flex-col shadow-2xl border-r border-slate-200 dark:border-slate-700">
+      
+      <!-- Drawer Profile Header -->
+      <div class="p-5 bg-gradient-to-r from-blue-600 to-blue-800 text-white flex flex-col justify-between relative">
+        <div class="flex justify-between items-start mb-3">
+          <img id="drawerUserPfp" src="https://placehold.co/100x100/2563eb/ffffff?text=KLM" class="w-12 h-12 rounded-full border-2 border-white/50 object-cover">
+          <button id="closeDrawerBtn" class="text-white/80 hover:text-white p-1">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+        <div>
+          <h3 id="drawerUserName" class="font-bold text-base leading-tight">Loading...</h3>
+          <p id="drawerUserHandle" class="text-xs text-blue-200">@user</p>
+        </div>
+      </div>
+
+      <!-- Channel & DM Section Switch Tabs -->
+      <div class="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+        <button id="drawerTabChats" class="flex-1 py-2.5 text-xs font-semibold text-blue-600 border-b-2 border-blue-600">Chats & Groups</button>
+        <button id="drawerTabUsers" class="flex-1 py-2.5 text-xs font-semibold text-slate-500 border-b-2 border-transparent">Members</button>
+      </div>
+
+      <!-- Drawer Content Area -->
+      <div class="flex-1 overflow-y-auto p-3 space-y-1" id="drawerContent">
+        <!-- Dynamic list of chats or users rendered here -->
+      </div>
+
+      <!-- Drawer Footer Navigation -->
+      <div class="p-3 border-t border-slate-200 dark:border-slate-700 space-y-1 bg-slate-50 dark:bg-slate-900/40">
+        <button id="newGroupBtn" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800">
+          <i class="fa-solid fa-plus-circle text-blue-500 text-sm"></i>
+          <span>Create New Group</span>
+        </button>
+
+        <button id="adminPanelBtn" class="hidden w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50">
+          <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-shield-halved text-amber-500 text-sm"></i>
+            <span>SAHL Admin Panel</span>
+          </div>
+          <span id="pendingBadge" class="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+        </button>
+
+        <button id="mySettingsBtn" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800">
+          <i class="fa-solid fa-gear text-slate-500 text-sm"></i>
+          <span>Profile & App Settings</span>
+        </button>
+
+        <button id="logoutBtn" class="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40">
+          <i class="fa-solid fa-right-from-bracket text-sm"></i>
+          <span>Logout Account</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ================= PROFILE CARD MODAL ================= -->
+    <div id="profileModal" class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl transform transition-all border border-slate-200 dark:border-slate-700">
+        <div class="relative bg-gradient-to-r from-blue-600 to-indigo-700 h-24 p-4">
+          <button id="closeProfileBtn" class="absolute top-3 right-3 text-white/80 hover:text-white bg-black/20 w-8 h-8 rounded-full flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        
+        <div class="px-5 pt-0 pb-6 relative text-center">
+          <img id="cardPfp" src="https://placehold.co/100x100/2563eb/ffffff?text=User" class="w-20 h-20 rounded-full border-4 border-white dark:border-slate-800 shadow-md mx-auto -mt-10 object-cover">
+          
+          <h3 id="cardFullName" class="text-lg font-bold text-slate-900 dark:text-white mt-2">Loading...</h3>
+          <p id="cardUsername" class="text-xs text-blue-600 dark:text-blue-400 font-medium">@username</p>
+          
+          <div id="cardRoleBadge" class="inline-block mt-2 px-2.5 py-0.5 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-full text-[10px] font-bold uppercase tracking-wider">Member</div>
+          
+          <p id="cardBio" class="text-xs text-slate-500 dark:text-slate-400 mt-3 px-2 italic">No bio specified.</p>
+
+          <div class="mt-5 grid grid-cols-2 gap-2 text-left text-xs">
+            <a id="cardPhoneBtn" href="#" class="flex items-center p-2.5 bg-slate-100 dark:bg-slate-700/60 rounded-xl space-x-2 text-slate-700 dark:text-slate-200 hover:bg-slate-200">
+              <i class="fa-solid fa-phone text-emerald-500 text-sm"></i>
+              <span id="cardPhone" class="truncate font-medium">No phone</span>
+            </a>
+            <a id="cardIgBtn" href="#" target="_blank" class="flex items-center p-2.5 bg-slate-100 dark:bg-slate-700/60 rounded-xl space-x-2 text-slate-700 dark:text-slate-200 hover:bg-slate-200">
+              <i class="fa-brands fa-instagram text-pink-500 text-sm"></i>
+              <span id="cardIg" class="truncate font-medium">No IG</span>
+            </a>
+            <a id="cardSnapBtn" href="#" target="_blank" class="flex items-center p-2.5 bg-slate-100 dark:bg-slate-700/60 rounded-xl space-x-2 text-slate-700 dark:text-slate-200 hover:bg-slate-200">
+              <i class="fa-brands fa-snapchat text-amber-400 text-sm"></i>
+              <span id="cardSnap" class="truncate font-medium">No Snap</span>
+            </a>
+            <button id="cardDirectMsgBtn" class="flex items-center p-2.5 bg-blue-600 text-white rounded-xl space-x-2 justify-center hover:bg-blue-700 font-medium shadow-sm">
+              <i class="fa-solid fa-comment-dots text-sm"></i>
+              <span>Direct Msg</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= GLOBAL SEARCH MODAL ================= -->
+    <div id="searchModal" class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex flex-col p-4">
+      <div class="bg-white dark:bg-slate-800 w-full rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="p-3 border-b border-slate-200 dark:border-slate-700 flex items-center gap-2">
+          <i class="fa-solid fa-magnifying-glass text-slate-400 pl-2"></i>
+          <input type="text" id="globalSearchInput" placeholder="Search members by username or name..." class="flex-1 py-1.5 bg-transparent border-none text-sm focus:outline-none dark:text-white">
+          <button id="closeSearchBtn" class="p-1.5 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="searchResultsList" class="p-3 overflow-y-auto space-y-2 flex-1 min-h-[200px]">
+          <p class="text-xs text-slate-400 text-center py-8">Type a username or full name to search Kallumpuram members.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SETTINGS & PROFILE EDIT MODAL ================= -->
+    <div id="settingsModal" class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+      <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-slate-700 my-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-blue-600"></i> Settings & Profile
+          </h3>
+          <button id="closeSettingsBtn" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="space-y-4 text-xs">
+          <!-- Switch Controls Panel -->
+          <div class="bg-slate-100 dark:bg-slate-700/50 p-3 rounded-2xl space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-slate-700 dark:text-slate-300">Dark Theme Mode</span>
+              <label class="switch">
+                <input type="checkbox" id="themeSwitchToggle">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="flex items-center justify-between border-t border-slate-200 dark:border-slate-600 pt-2">
+              <span class="font-semibold text-slate-700 dark:text-slate-300">Message Notifications</span>
+              <label class="switch">
+                <input type="checkbox" id="notifSwitchToggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Edit Profile Form -->
+          <form id="updateProfileForm" class="space-y-3">
+            <div>
+              <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Phone Number</label>
+              <input type="text" id="editPhone" class="w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl dark:text-white">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Instagram</label>
+                <input type="text" id="editIg" class="w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl dark:text-white">
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Snapchat</label>
+                <input type="text" id="editSnap" class="w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl dark:text-white">
+              </div>
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Profile Photo URL</label>
+              <input type="url" id="editAvatar" class="w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl dark:text-white">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-600 dark:text-slate-400 mb-1">Bio / Status</label>
+              <textarea id="editBio" rows="2" class="w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl dark:text-white"></textarea>
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition">Save Profile Changes</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= ADMIN CONTROL PANEL MODAL ================= -->
+    <div id="adminModal" class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex flex-col p-4">
+      <div class="bg-white dark:bg-slate-800 w-full rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] my-auto border border-amber-500/30">
+        
+        <div class="p-4 bg-gradient-to-r from-amber-600 to-amber-700 text-white flex justify-between items-center">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-shield-halved text-xl"></i>
+            <h3 class="font-bold text-base">SAHL Admin Management</h3>
+          </div>
+          <button id="closeAdminBtn" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <!-- Admin Tabs -->
+        <div class="flex border-b border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800">
+          <button id="adminTabApprovals" class="flex-1 py-2.5 text-xs font-bold text-amber-600 border-b-2 border-amber-600">Pending Approvals</button>
+          <button id="adminTabUsers" class="flex-1 py-2.5 text-xs font-bold text-slate-500 border-b-2 border-transparent">All Members</button>
+        </div>
+
+        <div id="adminContentArea" class="p-4 overflow-y-auto flex-1 space-y-3">
+          <!-- Admin pending items or full member items rendered here -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= MEDIA ATTACHMENT MODAL ================= -->
+    <div id="attachModal" class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-2xl p-4 shadow-2xl border border-slate-200 dark:border-slate-700">
+        <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-2">Attach Image</h3>
+        <p class="text-xs text-slate-500 mb-3">Enter image link URL to embed in chat message:</p>
+        <input type="url" id="attachUrlInput" placeholder="https://images.unsplash.com/..." class="w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-xs dark:text-white mb-3">
+        <div class="flex justify-end space-x-2">
+          <button id="cancelAttachBtn" class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300">Cancel</button>
+          <button id="confirmAttachBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white">Attach</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Firebase v9 Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Firebase Pre-configured Setup
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_0Bexjwpsr3NG06Gt24ux56sSXVW8b4Y",
+      authDomain: "klm-app-862d5.firebaseapp.com",
+      projectId: "klm-app-862d5",
+      storageBucket: "klm-app-862d5.firebasestorage.app",
+      messagingSenderId: "82048608420",
+      appId: "1:82048608420:web:64f2585a9efdfa8fbf5e31"
+    };
+
+    // Initialize Firebase Services safely
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Core Global State
+    let currentUser = null; // Profile object from DB
+    let currentChatId = "group_main";
+    let currentChatType = "group"; // 'group' or 'dm'
+    let currentChatTargetUser = null;
+    let pendingImageAttachment = "";
+    let activeAdminTab = "approvals";
+    let messageUnsub = null;
+
+    // Ensure primary admin SAHL account exists in memory/Firestore
+    async function initAdminAndDefaultChannels() {
+      try {
+        // Ensure Main Lounge group document exists
+        const mainGroupRef = db.collection('chats').doc('group_main');
+        const doc = await mainGroupRef.get();
+        if (!doc.exists) {
+          await mainGroupRef.set({
+            id: 'group_main',
+            name: 'Kallumpuram Lounge',
+            type: 'group',
+            createdBy: 'SAHL',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            system: true
+          });
+        }
+
+        // Seed primary SAHL admin account if missing
+        const sahlDoc = await db.collection('users').doc('SAHL').get();
+        if (!sahlDoc.exists) {
+          await db.collection('users').doc('SAHL').set({
+            username: 'SAHL',
+            fullName: 'SAHL (Primary Admin)',
+            password: 'op77', // Default admin password
+            phone: '+91 99950 00000',
+            igHandle: 'sahl_klm',
+            snapHandle: 'sahl_klm',
+            avatar: 'https://placehold.co/100x100/1d4ed8/ffffff?text=SAHL',
+            bio: 'Official Primary Administrator of KLM Messenger.',
+            approved: true,
+            role: 'admin',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      } catch (err) {
+        console.warn("Firestore initialization fallback warning:", err);
+      }
+    }
+
+    // Robust Toggle Switch Delegator
+    document.addEventListener('change', function(e) {
+      // 1. Light / Dark Theme Toggle
+      if (e.target && e.target.id === 'themeSwitchToggle') {
+        if (e.target.checked) {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('klm_theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('klm_theme', 'light');
+        }
+      }
+
+      // 2. Admin User Approval / Admin Status Toggle
+      if (e.target && e.target.classList.contains('admin-approval-toggle')) {
+        const username = e.target.getAttribute('data-username');
+        const approvedState = e.target.checked;
+        db.collection('users').doc(username).update({
+          approved: approvedState
+        }).then(() => {
+          showAuthAlert(`Status updated for @${username}`, 'success');
+        }).catch(err => {
+          console.error("Error updating approval:", err);
+        });
+      }
+
+      // 3. Admin Role Toggle
+      if (e.target && e.target.classList.contains('admin-role-toggle')) {
+        const username = e.target.getAttribute('data-username');
+        const isAdmin = e.target.checked;
+        db.collection('users').doc(username).update({
+          role: isAdmin ? 'admin' : 'member'
+        }).then(() => {
+          showAuthAlert(`Role updated for @${username}`, 'success');
+        });
+      }
+    });
+
+    // Theme initialization
+    function initTheme() {
+      const savedTheme = localStorage.getItem('klm_theme');
+      const themeToggle = document.getElementById('themeSwitchToggle');
+      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        if (themeToggle) themeToggle.checked = true;
+      } else {
+        document.documentElement.classList.remove('dark');
+        if (themeToggle) themeToggle.checked = false;
+      }
+    }
+
+    // Helper to render alert messages
+    function showAuthAlert(msg, type = 'error') {
+      const box = document.getElementById('authAlert');
+      box.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-emerald-100', 'text-emerald-700');
+      if (type === 'error') {
+        box.classList.add('bg-red-100', 'text-red-700');
+      } else {
+        box.classList.add('bg-emerald-100', 'text-emerald-700');
+      }
+      box.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${msg}</span>`;
+    }
+
+    // Auth Tab Switching logic
+    document.getElementById('tabLoginBtn').addEventListener('click', () => {
+      document.getElementById('loginForm').classList.remove('hidden');
+      document.getElementById('signupForm').classList.add('hidden');
+      document.getElementById('tabLoginBtn').className = "flex-1 py-2.5 rounded-xl font-medium text-sm transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm";
+      document.getElementById('tabSignupBtn').className = "flex-1 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-500 dark:text-slate-400";
+    });
+
+    document.getElementById('tabSignupBtn').addEventListener('click', () => {
+      document.getElementById('signupForm').classList.remove('hidden');
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('tabSignupBtn').className = "flex-1 py-2.5 rounded-xl font-medium text-sm transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm";
+      document.getElementById('tabLoginBtn').className = "flex-1 py-2.5 rounded-xl font-medium text-sm transition-all text-slate-500 dark:text-slate-400";
+    });
+
+    // Login Form Submit
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const usernameInput = document.getElementById('loginUsername').value.trim();
+      const passwordInput = document.getElementById('loginPassword').value.trim();
+
+      if (!usernameInput || !passwordInput) {
+        showAuthAlert("Please fill in both fields.");
+        return;
+      }
+
+      try {
+        const userDoc = await db.collection('users').doc(usernameInput).get();
+        if (!userDoc.exists) {
+          showAuthAlert("Account not found. Please Sign Up first.");
+          return;
+        }
+
+        const userData = userDoc.data();
+        if (userData.password !== passwordInput) {
+          showAuthAlert("Invalid password.");
+          return;
+        }
+
+        if (!userData.approved) {
+          showAuthAlert("Your account is pending admin approval. Please wait for SAHL or an admin to approve your account.");
+          return;
+        }
+
+        // Authentication Successful
+        currentUser = userData;
+        localStorage.setItem('klm_active_user', usernameInput);
+        launchMessengerApp();
+
+      } catch (err) {
+        console.error(err);
+        showAuthAlert("Error logging in: " + err.message);
+      }
+    });
+
+    // Sign up Form Submit
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('signupUsername').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+      const fullName = document.getElementById('signupFullName').value.trim();
+      const password = document.getElementById('signupPassword').value.trim();
+      const phone = document.getElementById('signupPhone').value.trim();
+      const igHandle = document.getElementById('signupIg').value.trim();
+      const snapHandle = document.getElementById('signupSnap').value.trim();
+      const avatar = document.getElementById('signupAvatar').value.trim() || `https://placehold.co/100x100/2563eb/ffffff?text=${username.charAt(0).toUpperCase()}`;
+
+      if (!username || !fullName || !password || !phone) {
+        showAuthAlert("Please fill in all required fields marked with *.");
+        return;
+      }
+
+      try {
+        const userDoc = await db.collection('users').doc(username).get();
+        if (userDoc.exists) {
+          showAuthAlert("Username already taken. Please pick another.");
+          return;
+        }
+
+        const newUser = {
+          username: username,
+          fullName: fullName,
+          password: password,
+          phone: phone,
+          igHandle: igHandle,
+          snapHandle: snapHandle,
+          avatar: avatar,
+          bio: 'Kallumpuram Community Member',
+          approved: false, // Requires Admin Approval
+          role: 'member',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        await db.collection('users').doc(username).set(newUser);
+        showAuthAlert("Account requested! Pending approval by SAHL or an admin.", "success");
+        document.getElementById('signupForm').reset();
+
+      } catch (err) {
+        console.error(err);
+        showAuthAlert("Failed to register: " + err.message);
+      }
+    });
+
+    // Launch main application after login
+    function launchMessengerApp() {
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('mainScreen').classList.remove('hidden');
+
+      // Setup Drawer Profile
+      document.getElementById('drawerUserName').textContent = currentUser.fullName;
+      document.getElementById('drawerUserHandle').textContent = `@${currentUser.username}`;
+      document.getElementById('drawerUserPfp').src = currentUser.avatar;
+
+      // Show Admin Panel Button if SAHL or Admin
+      if (currentUser.role === 'admin' || currentUser.username === 'SAHL') {
+        document.getElementById('adminPanelBtn').classList.remove('hidden');
+        listenPendingApprovalsCount();
+      } else {
+        document.getElementById('adminPanelBtn').classList.add('hidden');
+      }
+
+      // Load channels & load main chat
+      loadDrawerChatsList();
+      switchChat('group_main', 'group', 'Kallumpuram Lounge', 'https://placehold.co/100x100/2563eb/ffffff?text=KLM');
+    }
+
+    // Listen to pending approvals badge
+    function listenPendingApprovalsCount() {
+      db.collection('users').where('approved', '==', false).onSnapshot(snapshot => {
+        const count = snapshot.size;
+        const badge = document.getElementById('pendingBadge');
+        badge.textContent = count;
+        if (count > 0) badge.classList.remove('hidden');
+        else badge.classList.add('hidden');
+      });
+    }
+
+    // Switch current active chat channel or DM
+    function switchChat(chatId, type, title, avatarUrl) {
+      currentChatId = chatId;
+      currentChatType = type;
+
+      document.getElementById('activeChatTitle').textContent = title;
+      document.getElementById('activeChatSubtitle').innerHTML = type === 'group' 
+        ? `<span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Group Chat` 
+        : `<span class="text-blue-500 font-normal">Direct Message</span>`;
+
+      const avatarContainer = document.getElementById('activeChatAvatar');
+      if (avatarUrl) {
+        avatarContainer.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover">`;
+      } else {
+        avatarContainer.innerHTML = `<i class="fa-solid fa-comments"></i>`;
+      }
+
+      closeDrawer();
+      subscribeToMessages();
+    }
+
+    // Realtime Messages Subscriber
+    function subscribeToMessages() {
+      if (messageUnsub) messageUnsub();
+
+      const container = document.getElementById('messagesContainer');
+      container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4"><i class="fa-solid fa-spinner animate-spin"></i> Loading messages...</div>`;
+
+      messageUnsub = db.collection('messages')
+        .where('chatId', '==', currentChatId)
+        .onSnapshot(snapshot => {
+          let docs = [];
+          snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+
+          // Client-side sort by timestamp to avoid requiring complex firestore index
+          docs.sort((a, b) => (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0));
+
+          renderMessages(docs);
+        }, err => {
+          console.error("Messages listener error:", err);
+          container.innerHTML = `<p class="text-xs text-center text-red-500 py-4">Error loading messages.</p>`;
+        });
+    }
+
+    // Render Messages Feed
+    function renderMessages(messages) {
+      const container = document.getElementById('messagesContainer');
+      if (messages.length === 0) {
+        container.innerHTML = `
+          <div class="text-center text-slate-400 py-12">
+            <i class="fa-solid fa-comments text-3xl mb-2 text-slate-300 dark:text-slate-600"></i>
+            <p class="text-xs">No messages here yet. Say hello!</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      messages.forEach(msg => {
+        const isSelf = msg.senderUsername === currentUser.username;
+        const timeStr = msg.createdAt ? new Date(msg.createdAt.toMillis()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Just now';
+
+        html += `
+          <div class="flex flex-col ${isSelf ? 'items-end' : 'items-start'} my-1">
+            <div class="flex items-end gap-1.5 max-w-[85%] ${isSelf ? 'flex-row-reverse' : 'flex-row'}">
+              ${!isSelf ? `
+                <img src="${msg.senderAvatar || 'https://placehold.co/80x80'}" onclick="openProfileCard('${msg.senderUsername}')" class="w-7 h-7 rounded-full object-cover cursor-pointer mb-1 shadow-sm">
+              ` : ''}
+              
+              <div class="${isSelf ? 'chat-bubble-user text-white' : 'chat-bubble-other bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700'} px-3.5 py-2 rounded-2xl shadow-sm text-xs relative group">
+                
+                ${!isSelf ? `<p onclick="openProfileCard('${msg.senderUsername}')" class="font-bold text-[10px] text-blue-600 dark:text-blue-400 cursor-pointer mb-0.5">${msg.senderName || msg.senderUsername}</p>` : ''}
+                
+                ${msg.imageUrl ? `<img src="${msg.imageUrl}" class="rounded-xl my-1 max-h-48 object-cover w-full">` : ''}
+                
+                <p class="whitespace-pre-wrap break-words leading-relaxed">${escapeHtml(msg.text || '')}</p>
+                
+                <div class="flex items-center justify-end gap-1 mt-1 text-[9px] ${isSelf ? 'text-blue-100' : 'text-slate-400'}">
+                  <span>${timeStr}</span>
+                </div>
+
+                <!-- Reactions display -->
+                ${msg.reactions ? `
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    ${Object.entries(msg.reactions).map(([emoji, count]) => `
+                      <span class="bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded-full text-[10px]">${emoji} ${count}</span>
+                    `).join('')}
+                  </div>
+                ` : ''}
+
+                <!-- Quick Reaction Hover Bar -->
+                <div class="hidden group-hover:flex absolute -top-8 ${isSelf ? 'right-0' : 'left-0'} bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-full px-2 py-0.5 space-x-1 z-10">
+                  <span onclick="addReaction('${msg.id}', '❤️')" class="cursor-pointer hover:scale-125 transition">❤️</span>
+                  <span onclick="addReaction('${msg.id}', '👍')" class="cursor-pointer hover:scale-125 transition">👍</span>
+                  <span onclick="addReaction('${msg.id}', '🔥')" class="cursor-pointer hover:scale-125 transition">🔥</span>
+                  <span onclick="addReaction('${msg.id}', '😂')" class="cursor-pointer hover:scale-125 transition">😂</span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Helper HTML Escaper
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // Send Message
+    document.getElementById('sendMessageForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('messageInput');
+      const text = input.value.trim();
+
+      if (!text && !pendingImageAttachment) return;
+
+      const newMsg = {
+        chatId: currentChatId,
+        text: text,
+        imageUrl: pendingImageAttachment || null,
+        senderUsername: currentUser.username,
+        senderName: currentUser.fullName,
+        senderAvatar: currentUser.avatar,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      input.value = '';
+      clearAttachment();
+
+      try {
+        await db.collection('messages').add(newMsg);
+      } catch (err) {
+        console.error("Error sending message:", err);
+      }
+    });
+
+    // Add Reaction
+    async function addReaction(msgId, emoji) {
+      try {
+        const ref = db.collection('messages').doc(msgId);
+        const doc = await ref.get();
+        if (doc.exists) {
+          const reactions = doc.data().reactions || {};
+          reactions[emoji] = (reactions[emoji] || 0) + 1;
+          await ref.update({ reactions });
+        }
+      } catch(err) {
+        console.error("Error adding reaction:", err);
+      }
+    }
+
+    // Load Drawer Chat List
+    async function loadDrawerChatsList() {
+      const container = document.getElementById('drawerContent');
+      container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4"><i class="fa-solid fa-spinner animate-spin"></i> Loading chats...</div>`;
+
+      try {
+        // Load custom groups
+        const chatsSnapshot = await db.collection('chats').get();
+        let html = `<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 my-1">Groups</p>`;
+
+        chatsSnapshot.forEach(doc => {
+          const chat = doc.data();
+          html += `
+            <div onclick="switchChat('${chat.id}', 'group', '${chat.name}', 'https://placehold.co/100x100/2563eb/ffffff?text=${chat.name.charAt(0)}')" class="flex items-center space-x-3 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer transition ${currentChatId === chat.id ? 'bg-blue-50 dark:bg-slate-700/80 font-bold' : ''}">
+              <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
+                ${chat.name.charAt(0).toUpperCase()}
+              </div>
+              <div class="flex-1 truncate">
+                <p class="text-xs text-slate-800 dark:text-slate-200">${chat.name}</p>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+      } catch(err) {
+        console.error(err);
+      }
+    }
+
+    // Switch Drawer Tab to Members
+    document.getElementById('drawerTabUsers').addEventListener('click', async () => {
+      document.getElementById('drawerTabUsers').className = "flex-1 py-2.5 text-xs font-semibold text-blue-600 border-b-2 border-blue-600";
+      document.getElementById('drawerTabChats').className = "flex-1 py-2.5 text-xs font-semibold text-slate-500 border-b-2 border-transparent";
+      
+      const container = document.getElementById('drawerContent');
+      container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4"><i class="fa-solid fa-spinner animate-spin"></i> Loading members...</div>`;
+
+      const usersSnapshot = await db.collection('users').where('approved', '==', true).get();
+      let html = `<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 my-1">Approved Members</p>`;
+
+      usersSnapshot.forEach(doc => {
+        const u = doc.data();
+        if (u.username === currentUser.username) return; // Skip self
+
+        const dmChatId = getDmChatId(currentUser.username, u.username);
+
+        html += `
+          <div class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer transition">
+            <div onclick="openProfileCard('${u.username}')" class="flex items-center space-x-2.5 truncate">
+              <img src="${u.avatar}" class="w-8 h-8 rounded-full object-cover">
+              <div class="truncate">
+                <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-tight">${u.fullName}</p>
+                <p class="text-[10px] text-slate-400">@${u.username}</p>
+              </div>
+            </div>
+            <button onclick="switchChat('${dmChatId}', 'dm', '${u.fullName}', '${u.avatar}')" class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 rounded-lg text-xs">
+              <i class="fa-solid fa-comment"></i>
+            </button>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    });
+
+    document.getElementById('drawerTabChats').addEventListener('click', () => {
+      document.getElementById('drawerTabChats').className = "flex-1 py-2.5 text-xs font-semibold text-blue-600 border-b-2 border-blue-600";
+      document.getElementById('drawerTabUsers').className = "flex-1 py-2.5 text-xs font-semibold text-slate-500 border-b-2 border-transparent";
+      loadDrawerChatsList();
+    });
+
+    // Consistent DM chat ID generation
+    function getDmChatId(userA, userB) {
+      return [userA, userB].sort().join('_dm_');
+    }
+
+    // Open / Close Drawer
+    const drawerBackdrop = document.getElementById('drawerBackdrop');
+    const drawerMenu = document.getElementById('drawerMenu');
+
+    document.getElementById('openDrawerBtn').addEventListener('click', () => {
+      drawerBackdrop.classList.remove('hidden');
+      drawerMenu.classList.remove('drawer-hidden');
+      drawerMenu.classList.add('drawer-visible');
+    });
+
+    function closeDrawer() {
+      drawerBackdrop.classList.add('hidden');
+      drawerMenu.classList.remove('drawer-visible');
+      drawerMenu.classList.add('drawer-hidden');
+    }
+
+    document.getElementById('closeDrawerBtn').addEventListener('click', closeDrawer);
+    drawerBackdrop.addEventListener('click', closeDrawer);
+
+    // Create New Group Prompt
+    document.getElementById('newGroupBtn').addEventListener('click', async () => {
+      const groupName = prompt("Enter new Group Chat name:");
+      if (!groupName || !groupName.trim()) return;
+
+      const groupId = 'group_' + Date.now();
+      await db.collection('chats').doc(groupId).set({
+        id: groupId,
+        name: groupName.trim(),
+        type: 'group',
+        createdBy: currentUser.username,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      loadDrawerChatsList();
+      switchChat(groupId, 'group', groupName.trim(), `https://placehold.co/100x100/2563eb/ffffff?text=${groupName.trim().charAt(0)}`);
+    });
+
+    // Search Modal Trigger
+    document.getElementById('globalSearchBtn').addEventListener('click', () => {
+      document.getElementById('searchModal').classList.remove('hidden');
+      document.getElementById('globalSearchInput').focus();
+    });
+
+    document.getElementById('closeSearchBtn').addEventListener('click', () => {
+      document.getElementById('searchModal').classList.add('hidden');
+    });
+
+    // Real-time Global Search Listener
+    document.getElementById('globalSearchInput').addEventListener('input', async (e) => {
+      const query = e.target.value.trim().toLowerCase();
+      const resultsContainer = document.getElementById('searchResultsList');
+
+      if (!query) {
+        resultsContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">Type a username or full name to search Kallumpuram members.</p>`;
+        return;
+      }
+
+      const usersSnap = await db.collection('users').get();
+      let matches = [];
+
+      usersSnap.forEach(doc => {
+        const u = doc.data();
+        if (u.username.toLowerCase().includes(query) || u.fullName.toLowerCase().includes(query)) {
+          matches.push(u);
+        }
+      });
+
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">No matching members found.</p>`;
+        return;
+      }
+
+      let html = '';
+      matches.forEach(u => {
+        html += `
+          <div onclick="openProfileCard('${u.username}'); document.getElementById('searchModal').classList.add('hidden');" class="flex items-center space-x-3 p-2 bg-slate-50 dark:bg-slate-700/40 rounded-xl hover:bg-slate-100 cursor-pointer">
+            <img src="${u.avatar}" class="w-10 h-10 rounded-full object-cover">
+            <div>
+              <p class="text-xs font-bold text-slate-900 dark:text-white">${u.fullName}</p>
+              <p class="text-[10px] text-blue-600 dark:text-blue-400">@${u.username}</p>
+            </div>
+          </div>
+        `;
+      });
+
+      resultsContainer.innerHTML = html;
+    });
+
+    // Profile Card Viewer
+    async function openProfileCard(username) {
+      try {
+        const userDoc = await db.collection('users').doc(username).get();
+        if (!userDoc.exists) return;
+
+        const u = userDoc.data();
+        document.getElementById('cardFullName').textContent = u.fullName;
+        document.getElementById('cardUsername').textContent = `@${u.username}`;
+        document.getElementById('cardPfp').src = u.avatar;
+        document.getElementById('cardBio').textContent = u.bio || 'Kallumpuram Community Member';
+        document.getElementById('cardRoleBadge').textContent = u.role === 'admin' ? 'ADMINISTRATOR' : 'MEMBER';
+
+        // Direct Actions
+        document.getElementById('cardPhone').textContent = u.phone || 'N/A';
+        document.getElementById('cardPhoneBtn').href = u.phone ? `tel:${u.phone}` : '#';
+
+        document.getElementById('cardIg').textContent = u.igHandle ? `@${u.igHandle}` : 'No Instagram';
+        document.getElementById('cardIgBtn').href = u.igHandle ? `https://instagram.com/${u.igHandle.replace('@','')}` : '#';
+
+        document.getElementById('cardSnap').textContent = u.snapHandle || 'No Snapchat';
+        document.getElementById('cardSnapBtn').href = u.snapHandle ? `https://snapchat.com/add/${u.snapHandle}` : '#';
+
+        // Direct Message Button
+        document.getElementById('cardDirectMsgBtn').onclick = () => {
+          document.getElementById('profileModal').classList.add('hidden');
+          const dmId = getDmChatId(currentUser.username, u.username);
+          switchChat(dmId, 'dm', u.fullName, u.avatar);
+        };
+
+        document.getElementById('profileModal').classList.remove('hidden');
+      } catch (err) {
+        console.error("Profile load error:", err);
+      }
+    }
+
+    document.getElementById('closeProfileBtn').addEventListener('click', () => {
+      document.getElementById('profileModal').classList.add('hidden');
+    });
+
+    // Open Admin Panel
+    document.getElementById('adminPanelBtn').addEventListener('click', () => {
+      closeDrawer();
+      document.getElementById('adminModal').classList.remove('hidden');
+      loadAdminContent();
+    });
+
+    document.getElementById('closeAdminBtn').addEventListener('click', () => {
+      document.getElementById('adminModal').classList.add('hidden');
+    });
+
+    document.getElementById('adminTabApprovals').addEventListener('click', () => {
+      activeAdminTab = "approvals";
+      document.getElementById('adminTabApprovals').className = "flex-1 py-2.5 text-xs font-bold text-amber-600 border-b-2 border-amber-600";
+      document.getElementById('adminTabUsers').className = "flex-1 py-2.5 text-xs font-bold text-slate-500 border-b-2 border-transparent";
+      loadAdminContent();
+    });
+
+    document.getElementById('adminTabUsers').addEventListener('click', () => {
+      activeAdminTab = "users";
+      document.getElementById('adminTabUsers').className = "flex-1 py-2.5 text-xs font-bold text-amber-600 border-b-2 border-amber-600";
+      document.getElementById('adminTabApprovals').className = "flex-1 py-2.5 text-xs font-bold text-slate-500 border-b-2 border-transparent";
+      loadAdminContent();
+    });
+
+    async function loadAdminContent() {
+      const container = document.getElementById('adminContentArea');
+      container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4"><i class="fa-solid fa-spinner animate-spin"></i> Loading...</div>`;
+
+      try {
+        if (activeAdminTab === "approvals") {
+          const snapshot = await db.collection('users').where('approved', '==', false).get();
+          if (snapshot.empty) {
+            container.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">No pending sign-up approval requests.</p>`;
+            return;
+          }
+
+          let html = '';
+          snapshot.forEach(doc => {
+            const u = doc.data();
+            html += `
+              <div class="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-2xl flex items-center justify-between border border-slate-200 dark:border-slate-600">
+                <div class="flex items-center space-x-3">
+                  <img src="${u.avatar}" class="w-10 h-10 rounded-full object-cover">
+                  <div>
+                    <h4 class="text-xs font-bold text-slate-900 dark:text-white">${u.fullName}</h4>
+                    <p class="text-[10px] text-blue-600 dark:text-blue-400">@${u.username} • ${u.phone}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                  <span class="text-[10px] font-semibold text-slate-500">Approve:</span>
+                  <label class="switch">
+                    <input type="checkbox" class="admin-approval-toggle" data-username="${u.username}">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+
+        } else {
+          // All Users List Tab
+          const snapshot = await db.collection('users').get();
+          let html = '';
+          snapshot.forEach(doc => {
+            const u = doc.data();
+            html += `
+              <div class="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-2xl flex items-center justify-between border border-slate-200 dark:border-slate-600 text-xs">
+                <div>
+                  <h4 class="font-bold text-slate-900 dark:text-white">${u.fullName} (@${u.username})</h4>
+                  <p class="text-[10px] text-slate-500">${u.role.toUpperCase()} • ${u.approved ? 'Approved' : 'Pending'}</p>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                  <div class="flex items-center space-x-1">
+                    <span class="text-[10px] text-slate-400">Admin:</span>
+                    <label class="switch">
+                      <input type="checkbox" class="admin-role-toggle" data-username="${u.username}" ${u.role === 'admin' ? 'checked' : ''}>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Open Settings Modal
+    document.getElementById('mySettingsBtn').addEventListener('click', () => {
+      closeDrawer();
+      document.getElementById('editPhone').value = currentUser.phone || '';
+      document.getElementById('editIg').value = currentUser.igHandle || '';
+      document.getElementById('editSnap').value = currentUser.snapHandle || '';
+      document.getElementById('editAvatar').value = currentUser.avatar || '';
+      document.getElementById('editBio').value = currentUser.bio || '';
+
+      document.getElementById('settingsModal').classList.remove('hidden');
+    });
+
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+      document.getElementById('settingsModal').classList.add('hidden');
+    });
+
+    // Save Settings
+    document.getElementById('updateProfileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newPhone = document.getElementById('editPhone').value.trim();
+      const newIg = document.getElementById('editIg').value.trim();
+      const newSnap = document.getElementById('editSnap').value.trim();
+      const newAvatar = document.getElementById('editAvatar').value.trim();
+      const newBio = document.getElementById('editBio').value.trim();
+
+      try {
+        await db.collection('users').doc(currentUser.username).update({
+          phone: newPhone,
+          igHandle: newIg,
+          snapHandle: newSnap,
+          avatar: newAvatar,
+          bio: newBio
+        });
+
+        currentUser.phone = newPhone;
+        currentUser.igHandle = newIg;
+        currentUser.snapHandle = newSnap;
+        currentUser.avatar = newAvatar;
+        currentUser.bio = newBio;
+
+        document.getElementById('drawerUserPfp').src = newAvatar;
+
+        document.getElementById('settingsModal').classList.add('hidden');
+        alert("Profile updated successfully!");
+      } catch (err) {
+        alert("Failed to update profile: " + err.message);
+      }
+    });
+
+    // Attachments Handling
+    document.getElementById('attachMediaBtn').addEventListener('click', () => {
+      document.getElementById('attachModal').classList.remove('hidden');
+    });
+
+    document.getElementById('cancelAttachBtn').addEventListener('click', () => {
+      document.getElementById('attachModal').classList.add('hidden');
+    });
+
+    document.getElementById('confirmAttachBtn').addEventListener('click', () => {
+      const url = document.getElementById('attachUrlInput').value.trim();
+      if (url) {
+        pendingImageAttachment = url;
+        document.getElementById('previewImg').src = url;
+        document.getElementById('attachmentPreview').classList.remove('hidden');
+      }
+      document.getElementById('attachModal').classList.add('hidden');
+      document.getElementById('attachUrlInput').value = '';
+    });
+
+    function clearAttachment() {
+      pendingImageAttachment = "";
+      document.getElementById('attachmentPreview').classList.add('hidden');
+    }
+
+    document.getElementById('clearAttachment').addEventListener('click', clearAttachment);
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('klm_active_user');
+      currentUser = null;
+      if (messageUnsub) messageUnsub();
+      closeDrawer();
+      document.getElementById('mainScreen').classList.add('hidden');
+      document.getElementById('authScreen').classList.remove('hidden');
+    });
+
+    // App Window Load Bootstrapper
+    window.onload = async function() {
+      initTheme();
+      await initAdminAndDefaultChannels();
+
+      // Check auto login cache
+      const cachedUsername = localStorage.getItem('klm_active_user');
+      if (cachedUsername) {
+        try {
+          const uDoc = await db.collection('users').doc(cachedUsername).get();
+          if (uDoc.exists && uDoc.data().approved) {
+            currentUser = uDoc.data();
+            launchMessengerApp();
+          }
+        } catch (e) {
+          console.warn("Cached login failed:", e);
+        }
+      }
+    };
+  </script>
+</body>
+</html>
